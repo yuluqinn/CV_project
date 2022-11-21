@@ -12,10 +12,9 @@ from utils import *
 from modules import UNet_conditional, EMA
 import logging
 import wandb
-
 config = SimpleNamespace(    
     run_name = "DDPM_conditional",
-    epochs = 1,
+    epochs = 5,
     noise_steps=1000,
     seed = 42,
     batch_size = 10,
@@ -33,7 +32,7 @@ config = SimpleNamespace(
     num_workers=10,
     lr = 3e-4, 
     load = False, 
-    last_epoch=0)
+    last_epoch=1)
 
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=logging.INFO, datefmt="%I:%M:%S")
@@ -156,7 +155,7 @@ class Diffusion:
             'model_state_dict': self.model.state_dict(),
             'ema_model_state_dict': self.ema_model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'loss': self.mse}, os.path.join("models", run_name, f"model.pt"))
+            'loss': self.mse}, os.path.join("models", run_name, f"model{epochs}.pt"))
        # torch.save(self.model.state_dict(), os.path.join("models", run_name, f"ckpt.pt"))
         #torch.save(self.ema_model.state_dict(), os.path.join("models", run_name, f"ema_ckpt.pt"))
         #torch.save(self.optimizer.state_dict(), os.path.join("models", run_name, f"optim.pt"))
@@ -177,7 +176,7 @@ class Diffusion:
         self.scaler = torch.cuda.amp.GradScaler()
         start_epoch = 0
         if args.load:
-            start_epoch = self.load(os.path.join("models", args.run_name), "model.pt")
+            start_epoch = self.load(os.path.join("models", args.run_name), args.loadfile)
         return start_epoch
     def fit(self, args, start_epoch):
        # for epoch in progress_bar(range(args.epochs), total=args.epochs, leave=True):
@@ -217,7 +216,7 @@ def parse_args(config):
     parser.add_argument('--slice_size', type=int, default=config.slice_size, help='slice size')
     parser.add_argument('--noise_steps', type=int, default=config.noise_steps, help='noise steps')
     parser.add_argument('--load', type=bool, default=config.load, help='load models')
-    parser.add_argument('--last_epoch', type=int, default=config.last_epoch, help='last epoch')
+    parser.add_argument('--loadfile', type=str, default=config.last_epoch, help='loadfile name')
     args = vars(parser.parse_args())
     
     # update config with parsed args
